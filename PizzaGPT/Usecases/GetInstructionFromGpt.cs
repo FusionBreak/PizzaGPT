@@ -14,7 +14,7 @@ namespace PizzaGPT.Usecases
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
             {
                 var url = "https://api.openai.com/v1/chat/completions";
-                var bearerToken = "XXXX";
+                var bearerToken = Environment.GetEnvironmentVariable("OpenAI-API-Key");
 
                 var gptRequest = new Gpt.Request()
                 {
