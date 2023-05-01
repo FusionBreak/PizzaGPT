@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PizzaGPT.Database;
 using PizzaGPT.Usecases;
+using Spectre.Console;
 
 namespace PizzaGPT
 {
@@ -12,23 +13,28 @@ namespace PizzaGPT
             var services = ConfigureServices();
             var mediator = services.GetRequiredService<IMediator>();
 
-            Console.WriteLine("PizzaGPT\nHow can I help you?");
+            AnsiConsole.Markup("[underline aquamarine3]PizzaGPT[/]\n");
 
             while(true)
             {
                 Console.ForegroundColor = ConsoleColor.Gray;
-                var userInput = Console.ReadLine();
+                var userInput = AnsiConsole.Ask<string>("[gray]How can I help you?:[/]");
 
-                var instructionFromGpt = await mediator.Send(new GetInstructionFromGpt.Command(userInput));
-                var parsedInstruction = InstructionParser.Parse(instructionFromGpt.ReponseMessage);
-                var systemResponse = await mediator.Send(new ExecuteInstruction.Command(parsedInstruction));
-                var answer = await mediator.Send(new GetAnswerForUserFromGpt.Command(systemResponse.ReponseMessage, instructionFromGpt.History));
+                await AnsiConsole.Status()
+                .Spinner(Spinner.Known.Aesthetic)
+                .StartAsync("Search instructions...", async ctx =>
+                {
+                    var instructionFromGpt = await mediator.Send(new GetInstructionFromGpt.Command(userInput));
+                    var parsedInstruction = InstructionParser.Parse(instructionFromGpt.ReponseMessage);
+                    ctx.Status("Execute instructions...");
+                    ctx.Spinner(Spinner.Known.Pipe);
+                    var systemResponse = await mediator.Send(new ExecuteInstruction.Command(parsedInstruction));
+                    ctx.Status("Generate answer for the user...");
+                    var answer = await mediator.Send(new GetAnswerForUserFromGpt.Command(systemResponse.ReponseMessage, instructionFromGpt.History));
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write(answer.ReponseMessage);
-
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("\n----------------\n");
+                    AnsiConsole.MarkupLine($"\n[orange4_1]{answer.ReponseMessage}[/]");
+                    AnsiConsole.Write(new Rule());
+                });
             }
         }
 
