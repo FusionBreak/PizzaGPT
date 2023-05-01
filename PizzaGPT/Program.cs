@@ -19,7 +19,7 @@ namespace PizzaGPT
                 Console.ForegroundColor = ConsoleColor.Gray;
                 var userInput = Console.ReadLine();
 
-                var instructionFromGpt = await mediator.Send(new PostGptRequest.Command(userInput));
+                var instructionFromGpt = await mediator.Send(new GetInstructionFromGpt.Command(userInput));
                 var parsedInstruction = InstructionParser.Parse(instructionFromGpt.ReponseMessage);
                 var systemResponse = await mediator.Send(new ExecuteInstruction.Command(parsedInstruction));
                 var answer = await mediator.Send(new GetAnswerForUserFromGpt.Command(systemResponse.ReponseMessage, instructionFromGpt.History));
