@@ -16,48 +16,19 @@ namespace PizzaGPT
 
             while(true)
             {
+                Console.ForegroundColor = ConsoleColor.Gray;
                 var userInput = Console.ReadLine();
 
-                var result = await mediator.Send(new PostGptRequest.Command(userInput));
-                var instruction = InstructionParser.Parse(result.reponseMessage);
-                await ExecuteInstruction(mediator, instruction);
-                Console.WriteLine("\n----------------\n");
-            }
-        }
+                var instructionFromGpt = await mediator.Send(new PostGptRequest.Command(userInput));
+                var parsedInstruction = InstructionParser.Parse(instructionFromGpt.ReponseMessage);
+                var systemResponse = await mediator.Send(new ExecuteInstruction.Command(parsedInstruction));
+                var answer = await mediator.Send(new GetAnswerForUserFromGpt.Command(systemResponse.ReponseMessage, instructionFromGpt.History));
 
-        private static async Task ExecuteInstruction(IMediator mediator, Instruction instruction)
-        {
-            switch(instruction.Name)
-            {
-                case "AddOrder":
-                    var newOrder = await mediator.Send(new AddOrder.Command(instruction.Paramter[0], instruction.Paramter[1], DateTime.Now));
-                    Console.WriteLine($"Order {newOrder.Id} created!");
-                    break;
-                case "DeleteOrder":
-                    await mediator.Send(new DeleteOrder.Command(int.Parse(instruction.Paramter[0])));
-                    Console.WriteLine("Order deleted!");
-                    break;
-                case "GetLastOrders":
-                    var lastOrders = await mediator.Send(new GetLastOrders.Command(int.Parse(instruction.Paramter[0])));
-                    Console.WriteLine($"The last orders:");
-                    foreach(var o in lastOrders.Orders)
-                        Console.WriteLine($"{o.Id} : {o.CustomersName}, {o.PizzaName}, {o.OrderDateTime}");
-                    break;
-                case "GetOrder":
-                    var order = await mediator.Send(new GetOrder.Command(int.Parse(instruction.Paramter[0])));
-                    Console.WriteLine($"{order.CustomersName}, {order.PizzaName}, {order.OrderDateTime}");
-                    break;
-                case "GetOrdersFromCustomer":
-                    var orders = await mediator.Send(new GetOrdersFromCustomer.Command(instruction.Paramter[0]));
-                    Console.WriteLine($"All orders of the customer:");
-                    foreach(var o in orders.Orders)
-                        Console.WriteLine($"{o.Id} : {o.PizzaName}, {o.OrderDateTime}");
-                    break;
-                case "ERROR":
-                    Console.WriteLine($"{instruction.Paramter[0]}");
-                    break;
-                default:
-                    break;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write(answer.ReponseMessage);
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("\n----------------\n");
             }
         }
 

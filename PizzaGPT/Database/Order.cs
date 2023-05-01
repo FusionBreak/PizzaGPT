@@ -1,6 +1,6 @@
 ﻿namespace PizzaGPT.Database
 {
-    public class Order
+    public record Order
     {
         public int Id { get; set; }
         public required string CustomersName { get; init; } = string.Empty;

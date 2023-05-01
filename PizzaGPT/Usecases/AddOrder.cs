@@ -6,7 +6,7 @@ namespace PizzaGPT.Usecases
     public static class AddOrder
     {
         public record Command(string CustomersName, string PizzaName, DateTime OrderDateTime) : IRequest<Result>;
-        public record Result(int Id);
+        public record Result(Order NewOrder);
 
         public class Handler : IRequestHandler<Command, Result>
         {
@@ -23,7 +23,7 @@ namespace PizzaGPT.Usecases
                 };
                 _pizzaContext.Orders.Add(order);
                 await _pizzaContext.SaveChangesAsync(cancellationToken);
-                return new Result(order.Id);
+                return new Result(order);
             }
         }
     }

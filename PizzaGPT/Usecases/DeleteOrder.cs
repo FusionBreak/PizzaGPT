@@ -6,7 +6,7 @@ namespace PizzaGPT.Usecases
     public static class DeleteOrder
     {
         public record Command(int Id) : IRequest<Result>;
-        public record Result;
+        public record Result(Order DeletedOrder);
         public class Handler : IRequestHandler<Command, Result>
         {
             private readonly PizzaContext _pizzaContext;
@@ -16,7 +16,7 @@ namespace PizzaGPT.Usecases
                 var order = await _pizzaContext.Orders.FindAsync(request.Id);
                 _pizzaContext.Orders.Remove(order);
                 await _pizzaContext.SaveChangesAsync(cancellationToken);
-                return new Result();
+                return new Result(order);
             }
         }
     }

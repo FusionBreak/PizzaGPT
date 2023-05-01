@@ -7,7 +7,7 @@ namespace PizzaGPT.Usecases
     public static class GetLastOrders
     {
         public record Command(int Count) : IRequest<Result>;
-        public record Result(IEnumerable<Order> Orders);
+        public record Result(IEnumerable<Order> LastOrders);
         public class Handler : IRequestHandler<Command, Result>
         {
             private readonly PizzaContext _pizzaContext;

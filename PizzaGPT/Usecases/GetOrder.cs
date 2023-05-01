@@ -6,7 +6,7 @@ namespace PizzaGPT.Usecases
     public static class GetOrder
     {
         public record Command(int Id) : IRequest<Result>;
-        public record Result(string CustomersName, string PizzaName, DateTime OrderDateTime);
+        public record Result(Order Order);
         public class Handler : IRequestHandler<Command, Result>
         {
             private readonly PizzaContext _pizzaContext;
@@ -14,7 +14,7 @@ namespace PizzaGPT.Usecases
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
             {
                 var order = await _pizzaContext.Orders.FindAsync(request.Id);
-                return new Result(order.CustomersName, order.PizzaName, order.OrderDateTime);
+                return new Result(order);
             }
         }
     }

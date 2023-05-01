@@ -4,17 +4,17 @@ using MediatR;
 
 namespace PizzaGPT.Usecases
 {
-    public static class PostGptRequest
+    public static class GetInstructionFromGpt
     {
         public record Command(string requestMessage) : IRequest<Result>;
-        public record Result(string reponseMessage);
+        public record Result(string ReponseMessage, IEnumerable<Gpt.Message> History);
 
         public class Handler : IRequestHandler<Command, Result>
         {
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
             {
                 var url = "https://api.openai.com/v1/chat/completions";
-                var bearerToken = "XXXXXX";
+                var bearerToken = "XXXX";
 
                 var gptRequest = new Gpt.Request()
                 {
@@ -54,19 +54,10 @@ namespace PizzaGPT.Usecases
                         Here is a list of possible instructions:
 
                         AddOrder : <CustomersName>,<PizzaName>
-                        returns <OrderId>
-
                         DeleteOrder: <Id>
-                        returns nothing
-
                         GetLastOrders: <Count>
-                        returns list of <Order> of <Count>
-
                         GetOrder: <Id>
-                        returns <CustomersName>,<PizzaName>,<OrderDateTime>
-
                         GetOrdersFromCustomer: <CustomersName>
-                        returns list of <Order> from the <CustomersName>
                         """, role = Gpt.Roles.System },
                         new Gpt.Message { content = request.requestMessage, role = Gpt.Roles.User }
                     }
@@ -76,14 +67,17 @@ namespace PizzaGPT.Usecases
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
                 var response = await client.PostAsJsonAsync(url, gptRequest);
 
+                var messages = gptRequest.messages.ToList();
                 if(response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<Gpt.Response>();
-                    return new Result(result.choices[0].message.content);
+                    var gptResponse = await response.Content.ReadFromJsonAsync<Gpt.Response>();
+                    var answer = gptResponse.choices[0].message;
+                    messages.Add(answer);
+                    return new Result(answer.content, messages);
                 }
                 else
                 {
-                    return new Result(response.ReasonPhrase);
+                    return new Result(response.ReasonPhrase, messages);
                 }
             }
         }
